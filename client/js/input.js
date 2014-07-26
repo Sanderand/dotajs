@@ -1,4 +1,6 @@
-var input = {
+'use strict';
+
+var Input = {
 	keys: [{
 		code: 87,
 		name: 'w',
@@ -18,15 +20,19 @@ var input = {
 	}],
 
 	initialize: function() {
+		var scope = this;
+
 		window.addEventListener('keydown', function(e) {
-			input.onKeyDown(e.keyCode);
+			scope.onKeyDown(e.keyCode);
 		}, true);
 
 		window.addEventListener("keyup", function(e) {
-			input.onKeyUp(e.keyCode);
+			scope.onKeyUp(e.keyCode);
 		}, true);
 
-		console.info('input: initialized');
+		'use strict';
+
+console.info('Input: initialized');
 	},
 
 	onKeyDown: function(keyCode) {

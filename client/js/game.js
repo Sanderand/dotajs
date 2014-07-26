@@ -1,6 +1,8 @@
+'use strict';
+
 var Game = {
 	initialize: function() {
-		input.initialize();
+		Input.initialize();
 	}
 };
 
