@@ -13,7 +13,7 @@ function Player(name, position) {
 			y: 0
 		},
 		speed: 0,
-		maxSpeed: 1,
+		maxSpeed: 4,
 		acceleration: 0.1,
 		slope: 0.25,
 		DISTANCE_THRESHOLD: 3,

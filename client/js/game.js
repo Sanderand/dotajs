@@ -80,7 +80,7 @@ var Game = {
 		newBase.initialize();
 		this.NPCs.push(newBase);
 
-		var newBase = new NPC(this.scene, undefined, CFG.SCOURGE.FLAG, CFG.SCOURGE.BASE);
+		newBase = new NPC(this.scene, undefined, CFG.SCOURGE.FLAG, CFG.SCOURGE.BASE);
 		newBase.initialize();
 		this.NPCs.push(newBase);
 	},
@@ -111,17 +111,17 @@ var Game = {
 		}
 
 		// move
-		for (var i = 0; i < this.NPCs.length; i++) {
+		for (i = 0; i < this.NPCs.length; i++) {
 			this.NPCs[i].move();
 		}
 
 		// check for deaths
-		for (var i = this.NPCs.length - 1; i >= 0; i--) {
+		for (i = this.NPCs.length - 1; i >= 0; i--) {
 			if (this.NPCs[i].DEAD === true) {
 				this.NPCs.splice(i, 1);
-				console.log('npc died; remaining = ' + this.NPCs.length);
+				// console.log('npc died; remaining = ' + this.NPCs.length);
 			}
-		};
+		}
 	},
 
 	render: function() {

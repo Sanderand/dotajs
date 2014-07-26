@@ -7,18 +7,23 @@ function NPC(scene, lane, party, position) {
 		color: 0x000000,
 
 		position: position,
+		direction: {},
 		speed: 0,
 		maxSpeed: 4,
 		acceleration: 0.1,
 		slope: 0.25,
+
+		initialPower: 100,
+		power: 100,
 
 		party: party || 0,
 		lane: lane,
 		nextLanePoint: 0,
 
 		DEAD: false,
-		power: 100,
-		STRENGTH: 10,
+		ATTACK: 5,
+		ATTACK_SPEED: 30,
+		ATTACK_TIMEOUT: undefined,
 
 		ATTACK_RADIUS: 35,
 		ATTENTION_RADIUS: 50,
@@ -38,12 +43,12 @@ function NPC(scene, lane, party, position) {
 		},
 
 		spawn: function() {
-			var offset = {
-				x: Math.random() * this.SPAWN_POSITION_OFFSET - this.SPAWN_POSITION_OFFSET / 2,
-				y: Math.random() * this.SPAWN_POSITION_OFFSET - this.SPAWN_POSITION_OFFSET / 2
-			};
+			if (this.canMove()) {
+				var offset = {
+					x: Math.random() * this.SPAWN_POSITION_OFFSET - this.SPAWN_POSITION_OFFSET / 2,
+					y: Math.random() * this.SPAWN_POSITION_OFFSET - this.SPAWN_POSITION_OFFSET / 2
+				};
 
-			if (this.lane) {
 				this.position = {
 					x: this.lane[0].x + offset.x,
 					y: this.lane[0].y + offset.y
@@ -56,87 +61,99 @@ function NPC(scene, lane, party, position) {
 			}
 		},
 
-		doAI: function(allNPCs) {
-			if (this.lane) {
-				this.ATTACKING = undefined;
-				this.pointTowards(this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
-			}
-			
-			// find NPC in ATTENTION_RADIUS
-			for (var i = 0; i < allNPCs.length; i++) {
-				if (allNPCs[i].ID !== this.ID && allNPCs[i].party !== this.party) {
-					var dx = this.position.x - allNPCs[i].position.x,
-						dy = this.position.y - allNPCs[i].position.y,
-						distance = Math.sqrt(dx * dx + dy * dy);
+		canMove: function() {
+			return (this.lane !== undefined);
+		},
 
-					if (distance < this.ATTENTION_RADIUS) {
-						this.ATTACKING = allNPCs[i];
+		doAI: function(allNPCs) {
+			var newEnemy = this.findNextEnemyInAttentionRange(allNPCs);
+
+			if (newEnemy) {
+				this.ENEMY = newEnemy;
+				if (this.enemyInAttackRange()) {
+					if (!this.ATTACK_TIMEOUT) {
+						this.attack();
+					}
+				}
+			} else {
+				this.ENEMY = undefined;
+				if (this.canMove()) {
+					if (this.lane[this.nextLanePoint]) {
+						this.pointTowards(this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
 					}
 				}
 			}
+		},
 
-			if (this.ATTACKING) {
-				var attackersPosition = this.ATTACKING.position;
-				this.pointTowards(attackersPosition.x, attackersPosition.y);
-				this.ATTACKING.power -= this.STRENGTH * (0.75 + Math.random() * 0.5);
-
-				if (this.ATTACKING.power < 1) {
-					this.ATTACKING.die();
+		findNextEnemyInAttentionRange: function(allNPCs) {
+			for (var i = 0; i < allNPCs.length; i++) {
+				if (allNPCs[i].ID !== this.ID && allNPCs[i].party !== this.party) {
+					var distance = CALC.getDistance(this.position.x, this.position.y, allNPCs[i].position.x, allNPCs[i].position.y);
+					if (distance < this.ATTENTION_RADIUS) {
+						return allNPCs[i];
+					}
 				}
 			}
+		},
+
+		attack: function() {
+			if (this.DEAD || this.ENEMY === undefined) {
+				if (this.ATTACK_TIMEOUT) {
+					clearTimeout(this.ATTACK_TIMEOUT);
+				}
+			} else {
+				var attackChance = 0.75, // at least 75% damage, max 100%
+					scope = this;
+
+				this.ENEMY.power -= attackChance * this.ATTACK + Math.random() * (1 - attackChance);
+
+				if (this.ENEMY.power < 1) {
+					this.ENEMY.die();
+					this.ENEMY = undefined;
+				}
+
+				this.ATTACK_TIMEOUT = setTimeout(function() {
+					scope.attack();
+				}, scope.ATTACK_SPEED);
+			}
+		},
+
+		enemyInAttackRange: function() {
+			var distanceToEnemy = CALC.getDistance(this.position.x, this.position.y, this.ENEMY.position.x, this.ENEMY.position.y);
+			return (distanceToEnemy < this.ATTACK_RADIUS);
 		},
 
 		move: function() {
-			if (this.goToPoint) {
-				var dx = this.position.x - this.goToPoint.x,
-					dy = this.position.y - this.goToPoint.y,
-					distance = Math.sqrt(dx * dx + dy * dy);
-
-				if (this.ATTACKING) {
-					if (distance < this.ATTACK_RADIUS) {
-
-					} else {
-						this.moveForwards();
+			if (this.canMove()) {
+				if (this.ENEMY) {
+					if (!this.enemyInAttackRange()) {
+						this.pointTowards(this.ENEMY.position.x, this.ENEMY.position.y);
+						this.moveStep();
 					}
 				} else {
-					if (distance < this.DISTANCE_THRESHOLD) {
-						// reached that point
-						this.nextLanePoint++;
+					if (this.lane[this.nextLanePoint]) {
+						this.pointTowards(this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
+						this.moveStep();
+					}
+				}
 
-						if (this.lane[this.nextLanePoint]) {
-							this.pointTowards(this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
-						} else {
-							this.die();
-						}
-					} else {
-						this.moveForwards();
+				// always check if NPC made it to the next point
+				if (this.lane[this.nextLanePoint]) {
+					var distanceToNextLanePoint = CALC.getDistance(this.position.x, this.position.y, this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
+					if (distanceToNextLanePoint < this.DISTANCE_THRESHOLD) {
+						this.nextLanePoint++;
 					}
 				}
 			}
 		},
 
-		moveForwards: function() {
-						this.position.x += this.direction.x * this.maxSpeed;
-						this.position.y += this.direction.y * this.maxSpeed;
+		moveStep: function() {
+			this.position.x += this.direction.x * this.maxSpeed;
+			this.position.y += this.direction.y * this.maxSpeed;
 		},
 
 		pointTowards: function(x, y) {
-			this.goToPoint = {
-				x: x,
-				y: y
-			};
-
-			this.direction = {
-				x: x - this.position.x,
-				y: y - this.position.y,
-			}
-
-			//normalize direction vector
-			var len = Math.sqrt((this.direction.x * this.direction.x) + (this.direction.y * this.direction.y));
-			if (len != 0) {
-				this.direction.x *= 1 / len;
-				this.direction.y *= 1 / len;
-			}
+			this.direction = CALC.getVectorWithDirection(this.position.x, this.position.y, x, y);
 		},
 
 		die: function() {
@@ -144,6 +161,10 @@ function NPC(scene, lane, party, position) {
 				this.scene.removeChild(this.view);
 				this.view.clear();
 				this.DEAD = true;
+
+				if (this.ATTACK_TIMEOUT) {
+					clearTimeout(this.ATTACK_TIMEOUT);
+				}
 			}
 		},
 
@@ -157,6 +178,16 @@ function NPC(scene, lane, party, position) {
 			// radius
 			this.view.beginFill(this.color, 0.05);
 			this.view.drawCircle(this.position.x, this.position.y, this.ATTACK_RADIUS);
+
+			// power bar
+			var powerBarWidth = 30,
+				powerBarHeight = 3,
+				powerWidth = Math.round(this.power / this.initialPower * powerBarWidth);
+
+			this.view.beginFill(0x444444);
+			this.view.drawRect(this.position.x - powerBarWidth / 2, this.position.y - 15, powerBarWidth, powerBarHeight);
+			this.view.beginFill(this.color);
+			this.view.drawRect(this.position.x - powerBarWidth / 2, this.position.y - 15, powerWidth, powerBarHeight);
 
 			// npc
 			this.view.beginFill(this.color, 1);

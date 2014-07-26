@@ -23,21 +23,21 @@ var CFG = {
 		},
 		TOWERS: [{
 			x: padding,
-			y: size * 0.33
+			y: size * 0.2
 		}, {
 			x: padding,
-			y: size * 0.66
+			y: size * 0.5
 		}, {
-			x: size * 0.2,
-			y: size - size * 0.2
+			x: size * 0.25,
+			y: size - size * 0.25
 		}, {
 			x: size * 0.4,
 			y: size - size * 0.4
 		}, {
-			x: size * 0.33,
+			x: size * 0.5,
 			y: size - padding
 		}, {
-			x: size * 0.66,
+			x: size * 0.8,
 			y: size - padding
 		}],
 		LANES: [
@@ -81,23 +81,23 @@ var CFG = {
 			y: padding
 		},
 		TOWERS: [{
-			x: size * 0.33,
+			x: size * 0.5,
 			y: padding
 		}, {
-			x: size * 0.66,
+			x: size * 0.2,
 			y: padding
 		}, {
-			x: size - size * 0.2,
-			y: size * 0.2
+			x: size - size * 0.25,
+			y: size * 0.25
 		}, {
 			x: size - size * 0.4,
 			y: size * 0.4
 		}, {
 			x: size - padding,
-			y: size * 0.33
+			y: size * 0.5
 		}, {
 			x: size - padding,
-			y: size * 0.66
+			y: size * 0.8
 		}],
 		LANES: [
 			[{
