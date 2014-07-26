@@ -1,65 +1,30 @@
 'use strict';
 
 var Input = {
-	keys: [{
-		code: 87,
-		name: 'w',
-		state: false
-	}, {
-		code: 65,
-		name: 'a',
-		state: false
-	}, {
-		code: 83,
-		name: 's',
-		state: false
-	}, {
-		code: 68,
-		name: 'd',
-		state: false
-	}],
+	pressed: {},
 
-	initialize: function() {
-		var scope = this;
+	W: 87,
+	A: 65,
+	S: 83,
+	D: 68,
 
-		window.addEventListener('keydown', function(e) {
-			scope.onKeyDown(e.keyCode);
-		}, true);
-
-		window.addEventListener("keyup", function(e) {
-			scope.onKeyUp(e.keyCode);
-		}, true);
-
-		'use strict';
-
-console.info('Input: initialized');
+	isDown: function(keyCode) {
+		return this.pressed[keyCode];
 	},
 
-	onKeyDown: function(keyCode) {
-		this.keys.forEach(function(key) {
-			if (key.code == keyCode) {
-				return key.state = true;
-			}
-		});
+	onKeydown: function(keyCode) {
+		this.pressed[keyCode] = true;
 	},
 
-	onKeyUp: function(keyCode) {
-		this.keys.forEach(function(key) {
-			if (key.code == keyCode) {
-				return key.state = false;
-			}
-		});
-	},
-
-	isKeyPressed: function(keyName) {
-		var result = false;
-
-		this.keys.forEach(function(key) {
-			if (key.name == keyName && key.state === true) {
-				return result = true;
-			}
-		});
-
-		return result;
+	onKeyup: function(keyCode) {
+		delete this.pressed[keyCode];
 	}
 };
+
+window.addEventListener('keyup', function(event) {
+	Input.onKeyup(event.keyCode);
+}, false);
+
+window.addEventListener('keydown', function(event) {
+	Input.onKeydown(event.keyCode);
+}, false);
