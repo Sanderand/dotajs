@@ -27,17 +27,35 @@ var Game = {
 	},
 
 	setupObjects: function() {
-		for (var i = 0; i < 1; i++) {
-			var newNPC = new NPC();
-			this.scene.addChild(newNPC.view);
-			this.NPCs.push(newNPC);
-		}
-
+		this.spawnNPCs();
 		this.scene.addChild(this.me.view);
 	},
 
+	spawnNPCs: function() {
+		var scope = this;
+
+		CFG.SENTINEL.LANES.forEach(function(lane) {
+			scope.spawnNPCsAtLane(lane, CFG.GAME.NPC_GROUPSIZE, CFG.SENTINEL.FLAG);
+		});
+
+		CFG.SCOURGE.LANES.forEach(function(lane) {
+			scope.spawnNPCsAtLane(lane, CFG.GAME.NPC_GROUPSIZE, CFG.SCOURGE.FLAG);
+		});
+
+		setTimeout(function() {
+			scope.spawnNPCs();
+		}, 2500);
+	},
+
+	spawnNPCsAtLane: function(lane, amount, party) {
+		for (var i = 0; i < amount; i++) {
+			var newNPC = new NPC(this.scene, lane, party);
+			newNPC.initialize();
+			this.NPCs.push(newNPC);
+		}
+	},
+
 	setupEventListeners: function() {
-		var asd = this;
 		window.addEventListener('mouseup', function(e) {
 			this.me.pointTowards(e.x, e.y);
 		}.bind(this));
@@ -47,22 +65,40 @@ var Game = {
 		// get server input
 
 		// update objects
-
 		this.me.move(Input);
-		this.NPCs.forEach(function(NPC) {
-			NPC.move();
-		});
+		this.moveNPCs();
+
+		// handle collisions
 
 		// render
 		this.render();
 	},
 
+	moveNPCs: function() {
+		this.NPCs.forEach(function(NPC) {
+			NPC.move();
+		});
+
+		// check for deaths
+		for (var i = this.NPCs.length - 1; i >= 0; i--) {
+			if (this.NPCs[i].DEAD === true) {
+				this.NPCs.splice(i, 1);
+				console.log('npc died; remaining = ' + this.NPCs.length);
+			}
+		};
+	},
+
 	render: function() {
 		this.me.render();
+		this.renderNPCs();
+
+		this.renderer.render(this.stage);
+	},
+
+	renderNPCs: function() {
 		this.NPCs.forEach(function(NPC) {
 			NPC.render();
 		});
-		this.renderer.render(this.stage);
 	}
 };
 
