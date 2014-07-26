@@ -2,7 +2,7 @@
 
 var CFG = {
 	GAME: {
-		NPC_GROUPSIZE: 2
+		NPC_GROUPSIZE: 3
 	},
 	SENTINEL: {
 		FLAG: 0, 

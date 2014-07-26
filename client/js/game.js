@@ -66,7 +66,7 @@ var Game = {
 
 		// update objects
 		this.me.move(Input);
-		this.moveNPCs();
+		this.updateNPCs();
 
 		// handle collisions
 
@@ -74,10 +74,16 @@ var Game = {
 		this.render();
 	},
 
-	moveNPCs: function() {
-		this.NPCs.forEach(function(NPC) {
-			NPC.move();
-		});
+	updateNPCs: function() {
+		// ai response
+		for (var i = 0; i < this.NPCs.length; i++) {
+			this.NPCs[i].doAI(this.NPCs);
+		}
+
+		// move
+		for (var i = 0; i < this.NPCs.length; i++) {
+			this.NPCs[i].move();
+		}
 
 		// check for deaths
 		for (var i = this.NPCs.length - 1; i >= 0; i--) {
