@@ -21,14 +21,15 @@ function NPC(scene, lane, party, position) {
 		nextLanePoint: 0,
 
 		DEAD: false,
-		ATTACK: 5,
-		ATTACK_SPEED: 30,
-		ATTACK_TIMEOUT: undefined,
+		WAITING: false,
+		ATTACK_DAMAGE: 10,
+		ATTACK_SPEED: 100,
 
 		ATTACK_RADIUS: 35,
 		ATTENTION_RADIUS: 50,
-		DISTANCE_THRESHOLD: 5,
-		SPAWN_POSITION_OFFSET: 30,
+
+		SPAWN_POSITION_OFFSET: 50,
+		DISTANCE_THRESHOLD: 50,
 
 		initialize: function() {
 			if (party == CFG.SENTINEL.FLAG) {
@@ -71,7 +72,7 @@ function NPC(scene, lane, party, position) {
 			if (newEnemy) {
 				this.ENEMY = newEnemy;
 				if (this.enemyInAttackRange()) {
-					if (!this.ATTACK_TIMEOUT) {
+					if (this.WAITING === false) {
 						this.attack();
 					}
 				}
@@ -97,30 +98,27 @@ function NPC(scene, lane, party, position) {
 		},
 
 		attack: function() {
-			if (this.DEAD || this.ENEMY === undefined) {
-				if (this.ATTACK_TIMEOUT) {
-					clearTimeout(this.ATTACK_TIMEOUT);
-				}
-			} else {
+			if (this.DEAD === false || this.ENEMY) {
 				var attackChance = 0.75, // at least 75% damage, max 100%
 					scope = this;
 
-				this.ENEMY.power -= attackChance * this.ATTACK + Math.random() * (1 - attackChance);
+				this.ENEMY.power -= attackChance * this.ATTACK_DAMAGE + Math.random() * (1 - attackChance);
 
 				if (this.ENEMY.power < 1) {
 					this.ENEMY.die();
 					this.ENEMY = undefined;
 				}
 
-				this.ATTACK_TIMEOUT = setTimeout(function() {
-					scope.attack();
-				}, scope.ATTACK_SPEED);
+				this.WAITING = true;
+				setTimeout(function() {
+					scope.WAITING = false;
+				}, this.ATTACK_SPEED);
 			}
 		},
 
 		enemyInAttackRange: function() {
 			var distanceToEnemy = CALC.getDistance(this.position.x, this.position.y, this.ENEMY.position.x, this.ENEMY.position.y);
-			return (distanceToEnemy < this.ATTACK_RADIUS);
+			return (distanceToEnemy <= this.ATTACK_RADIUS);
 		},
 
 		move: function() {
@@ -161,23 +159,16 @@ function NPC(scene, lane, party, position) {
 				this.scene.removeChild(this.view);
 				this.view.clear();
 				this.DEAD = true;
-
-				if (this.ATTACK_TIMEOUT) {
-					clearTimeout(this.ATTACK_TIMEOUT);
-				}
 			}
 		},
 
 		render: function() {
 			this.view.clear();
 
-			// radius
-			this.view.beginFill(this.color, 0.05);
-			this.view.drawCircle(this.position.x, this.position.y, this.ATTENTION_RADIUS);
-
-			// radius
-			this.view.beginFill(this.color, 0.05);
-			this.view.drawCircle(this.position.x, this.position.y, this.ATTACK_RADIUS);
+			if (this.ENEMY) {
+				this.view.beginFill(this.color, 0.05);
+				this.view.drawCircle(this.position.x, this.position.y, this.ATTACK_RADIUS);
+			}
 
 			// power bar
 			var powerBarWidth = 30,
