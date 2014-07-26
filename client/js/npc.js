@@ -1,11 +1,12 @@
 'use strict';
 
-function NPC(scene, lane, party) {
+function NPC(scene, lane, party, position) {
 	return {
 		scene: scene,
 		view: new PIXI.Graphics(),
 		color: 0x000000,
 
+		position: position,
 		speed: 0,
 		maxSpeed: 4,
 		acceleration: 0.1,
@@ -42,18 +43,25 @@ function NPC(scene, lane, party) {
 				y: Math.random() * this.SPAWN_POSITION_OFFSET - this.SPAWN_POSITION_OFFSET / 2
 			};
 
-			this.position = {
-				x: this.lane[0].x + offset.x,
-				y: this.lane[0].y + offset.y
-			};
-			this.nextLanePoint++;
-			this.pointTowards(this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
+			if (this.lane) {
+				this.position = {
+					x: this.lane[0].x + offset.x,
+					y: this.lane[0].y + offset.y
+				};
+
+				this.nextLanePoint++;
+				this.pointTowards(this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
+			} else {
+				this.ATTACK_RADIUS = this.ATTENTION_RADIUS;
+			}
 		},
 
 		doAI: function(allNPCs) {
-			this.ATTACKING = undefined;
-			this.pointTowards(this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
-
+			if (this.lane) {
+				this.ATTACKING = undefined;
+				this.pointTowards(this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
+			}
+			
 			// find NPC in ATTENTION_RADIUS
 			for (var i = 0; i < allNPCs.length; i++) {
 				if (allNPCs[i].ID !== this.ID && allNPCs[i].party !== this.party) {

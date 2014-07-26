@@ -19,7 +19,7 @@ var Game = {
 	setupPixi: function() {
 		this.stage = new PIXI.Stage(0x888888);
 		this.scene = new PIXI.DisplayObjectContainer();
-		this.renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
+		this.renderer = PIXI.autoDetectRenderer(CFG.size, CFG.size);
 		this.stage.addChild(this.scene);
 
 		// add canvas to dom
@@ -27,7 +27,9 @@ var Game = {
 	},
 
 	setupObjects: function() {
+		this.spawnTowers();
 		this.spawnNPCs();
+		this.spawnBases();
 		this.scene.addChild(this.me.view);
 	},
 
@@ -47,12 +49,40 @@ var Game = {
 		}, 2500);
 	},
 
+	spawnTowers: function() {
+		var scope = this; 
+
+		CFG.SENTINEL.TOWERS.forEach(function(towerPostion) {
+			scope.spawnTower(towerPostion, CFG.SENTINEL.FLAG);
+		});
+
+		CFG.SCOURGE.TOWERS.forEach(function(towerPostion) {
+			scope.spawnTower(towerPostion, CFG.SCOURGE.FLAG);
+		});
+	},
+
+	spawnTower: function(position, party) {
+		var newTower = new NPC(this.scene, undefined, party, position);
+		newTower.initialize();
+		this.NPCs.push(newTower);
+	},
+
 	spawnNPCsAtLane: function(lane, amount, party) {
 		for (var i = 0; i < amount; i++) {
 			var newNPC = new NPC(this.scene, lane, party);
 			newNPC.initialize();
 			this.NPCs.push(newNPC);
 		}
+	},
+
+	spawnBases: function() {
+		var newBase = new NPC(this.scene, undefined, CFG.SENTINEL.FLAG, CFG.SENTINEL.BASE);
+		newBase.initialize();
+		this.NPCs.push(newBase);
+
+		var newBase = new NPC(this.scene, undefined, CFG.SCOURGE.FLAG, CFG.SCOURGE.BASE);
+		newBase.initialize();
+		this.NPCs.push(newBase);
 	},
 
 	setupEventListeners: function() {
