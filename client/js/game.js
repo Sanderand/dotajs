@@ -44,9 +44,9 @@ var Game = {
 			scope.spawnNPCsAtLane(lane, CFG.GAME.NPC_GROUPSIZE, CFG.SCOURGE.FLAG);
 		});
 
-		// setTimeout(function() {
-		// 	scope.spawnNPCs();
-		// }, 2500);
+		setTimeout(function() {
+			scope.spawnNPCs();
+		}, 2500);
 	},
 
 	spawnTowers: function() {
