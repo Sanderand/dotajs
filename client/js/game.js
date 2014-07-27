@@ -27,7 +27,7 @@ var Game = {
 	},
 
 	setupObjects: function() {
-		// this.spawnTowers();
+		this.spawnTowers();
 		this.spawnNPCs();
 		this.spawnBases();
 		this.scene.addChild(this.me.view);
