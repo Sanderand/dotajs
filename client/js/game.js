@@ -27,7 +27,7 @@ var Game = {
 	},
 
 	setupObjects: function() {
-		this.spawnTowers();
+		// this.spawnTowers();
 		this.spawnNPCs();
 		this.spawnBases();
 		this.scene.addChild(this.me.view);
@@ -44,13 +44,13 @@ var Game = {
 			scope.spawnNPCsAtLane(lane, CFG.GAME.NPC_GROUPSIZE, CFG.SCOURGE.FLAG);
 		});
 
-		setTimeout(function() {
-			scope.spawnNPCs();
-		}, 2500);
+		// setTimeout(function() {
+		// 	scope.spawnNPCs();
+		// }, 2500);
 	},
 
 	spawnTowers: function() {
-		var scope = this; 
+		var scope = this;
 
 		CFG.SENTINEL.TOWERS.forEach(function(towerPostion) {
 			scope.spawnTower(towerPostion, CFG.SENTINEL.FLAG);
@@ -61,28 +61,39 @@ var Game = {
 		});
 	},
 
-	spawnTower: function(position, party) {
-		var newTower = new NPC(this.scene, undefined, party, position);
-		newTower.initialize();
-		this.NPCs.push(newTower);
+	spawnTower: function(position, fraction) {
+		this.NPCs.push(new Tower(this.scene, fraction, {
+			position: position,
+			power: 1000,
+			attackDamage: 20,
+			attackSpeed: 200,
+			attackRadius: 75,
+			attentionRadius: 75
+		}));
 	},
 
-	spawnNPCsAtLane: function(lane, amount, party) {
+	spawnNPCsAtLane: function(lane, amount, fraction) {
 		for (var i = 0; i < amount; i++) {
-			var newNPC = new NPC(this.scene, lane, party);
-			newNPC.initialize();
-			this.NPCs.push(newNPC);
+			this.NPCs.push(new Creep(this.scene, fraction, {
+				power: 100,
+				attackDamage: 20,
+				attackSpeed: 100,
+				attackRadius: 30,
+				attentionRadius: 50
+			}, lane));
 		}
 	},
 
 	spawnBases: function() {
-		var newBase = new NPC(this.scene, undefined, CFG.SENTINEL.FLAG, CFG.SENTINEL.BASE);
-		newBase.initialize();
-		this.NPCs.push(newBase);
+		this.NPCs.push(new Base(this.scene, CFG.SENTINEL.FLAG, {
+			power: 10000,
+			position: CFG.SENTINEL.BASE
+		}));
 
-		newBase = new NPC(this.scene, undefined, CFG.SCOURGE.FLAG, CFG.SCOURGE.BASE);
-		newBase.initialize();
-		this.NPCs.push(newBase);
+		this.NPCs.push(new Base(this.scene, CFG.SCOURGE.FLAG, {
+			power: 10000,
+			position: CFG.SCOURGE.BASE
+		}));
 	},
 
 	setupEventListeners: function() {
@@ -105,21 +116,25 @@ var Game = {
 	},
 
 	updateNPCs: function() {
-		// ai response
+		// ai behaviour
 		for (var i = 0; i < this.NPCs.length; i++) {
-			this.NPCs[i].doAI(this.NPCs);
+			this.NPCs[i].handleBehaviour(this.NPCs);
 		}
 
-		// move
+		// update
 		for (i = 0; i < this.NPCs.length; i++) {
-			this.NPCs[i].move();
+			this.NPCs[i].update();
 		}
 
-		// check for deaths
+		// check for events
 		for (i = this.NPCs.length - 1; i >= 0; i--) {
-			if (this.NPCs[i].DEAD === true) {
+			// deaths
+			if (this.NPCs[i].dead === true) {
+				// win
+				if (this.NPCs[i].base === true) {
+					alert(CFG.getNameForFraction(this.NPCs[i].fraction) + ' lost');
+				}
 				this.NPCs.splice(i, 1);
-				// console.log('npc died; remaining = ' + this.NPCs.length);
 			}
 		}
 	},

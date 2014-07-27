@@ -1,188 +1,124 @@
 'use strict';
 
-function NPC(scene, lane, party, position) {
-	return {
-		scene: scene,
-		view: new PIXI.Graphics(),
-		color: 0x000000,
+// will be inherited
+var NPC = {
+	construct: function(scene, fraction, config) {
+		if (config === undefined) {
+			config = {};
+		}
 
-		position: position,
-		direction: {},
-		speed: 0,
-		maxSpeed: 4,
-		acceleration: 0.1,
-		slope: 0.25,
+		this.scene = scene;
+		this.fraction = fraction;
 
-		initialPower: 100,
-		power: 100,
+		this.color = CFG.getColorForFraction(this.fraction);
+		this.view = new PIXI.Graphics();
+		this.position = config.position || {};
 
-		party: party || 0,
-		lane: lane,
-		nextLanePoint: 0,
+		this.initialPower = config.power || 100;
+		this.power = this.initialPower;
 
-		DEAD: false,
-		WAITING: false,
-		ATTACK_DAMAGE: 10,
-		ATTACK_SPEED: 100,
+		this.dead = false;
+		this.waiting = false;
+		this.attackDamage = config.attackDamage || 1;
+		this.attackSpeed = config.attackSpeed ||  500;
 
-		ATTACK_RADIUS: 35,
-		ATTENTION_RADIUS: 50,
+		this.attackRadius = config.attackRadius || 10;
+		this.attentionRadius = config.attentionRadius || 20;
+		this.ID = Math.round(Math.random() * 1000000); // todo: put somewhere else
 
-		SPAWN_POSITION_OFFSET: 50,
-		DISTANCE_THRESHOLD: 50,
+		this.scene.addChild(this.view);
+		this.initialize();
+	},
 
-		initialize: function() {
-			if (party == CFG.SENTINEL.FLAG) {
-				this.color = 0x00ff00;
+	initialize: function() {},
+
+	update: function() {},
+
+	handleBehaviour: function(allNPCs) {
+		if (this.ENEMY) {
+			if (this.ENEMY.dead) {
+				this.ENEMY = undefined;
 			} else {
-				this.color = 0xff0000;
+				if (this.enemyInAttackRange() && this.waiting === false) {
+					this.attack();
+				}
 			}
-
-			this.ID = Math.round(Math.random() * 1000000);
-			this.spawn();
-			this.scene.addChild(this.view);
-		},
-
-		spawn: function() {
-			if (this.canMove()) {
-				var offset = {
-					x: Math.random() * this.SPAWN_POSITION_OFFSET - this.SPAWN_POSITION_OFFSET / 2,
-					y: Math.random() * this.SPAWN_POSITION_OFFSET - this.SPAWN_POSITION_OFFSET / 2
-				};
-
-				this.position = {
-					x: this.lane[0].x + offset.x,
-					y: this.lane[0].y + offset.y
-				};
-
-				this.nextLanePoint++;
-				this.pointTowards(this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
-			} else {
-				this.ATTACK_RADIUS = this.ATTENTION_RADIUS;
-			}
-		},
-
-		canMove: function() {
-			return (this.lane !== undefined);
-		},
-
-		doAI: function(allNPCs) {
-			var newEnemy = this.findNextEnemyInAttentionRange(allNPCs);
-
+		} else {
+			// look for enemies
+			var newEnemy = this.findEnemyInAttentionRange(allNPCs);
 			if (newEnemy) {
 				this.ENEMY = newEnemy;
-				if (this.enemyInAttackRange()) {
-					if (this.WAITING === false) {
-						this.attack();
-					}
-				}
-			} else {
-				this.ENEMY = undefined;
-				if (this.canMove()) {
-					if (this.lane[this.nextLanePoint]) {
-						this.pointTowards(this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
-					}
-				}
 			}
-		},
-
-		findNextEnemyInAttentionRange: function(allNPCs) {
-			for (var i = 0; i < allNPCs.length; i++) {
-				if (allNPCs[i].ID !== this.ID && allNPCs[i].party !== this.party) {
-					var distance = CALC.getDistance(this.position.x, this.position.y, allNPCs[i].position.x, allNPCs[i].position.y);
-					if (distance < this.ATTENTION_RADIUS) {
-						return allNPCs[i];
-					}
-				}
-			}
-		},
-
-		attack: function() {
-			if (this.DEAD === false || this.ENEMY) {
-				var attackChance = 0.75, // at least 75% damage, max 100%
-					scope = this;
-
-				this.ENEMY.power -= attackChance * this.ATTACK_DAMAGE + Math.random() * (1 - attackChance);
-
-				if (this.ENEMY.power < 1) {
-					this.ENEMY.die();
-					this.ENEMY = undefined;
-				}
-
-				this.WAITING = true;
-				setTimeout(function() {
-					scope.WAITING = false;
-				}, this.ATTACK_SPEED);
-			}
-		},
-
-		enemyInAttackRange: function() {
-			var distanceToEnemy = CALC.getDistance(this.position.x, this.position.y, this.ENEMY.position.x, this.ENEMY.position.y);
-			return (distanceToEnemy <= this.ATTACK_RADIUS);
-		},
-
-		move: function() {
-			if (this.canMove()) {
-				if (this.ENEMY) {
-					if (!this.enemyInAttackRange()) {
-						this.pointTowards(this.ENEMY.position.x, this.ENEMY.position.y);
-						this.moveStep();
-					}
-				} else {
-					if (this.lane[this.nextLanePoint]) {
-						this.pointTowards(this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
-						this.moveStep();
-					}
-				}
-
-				// always check if NPC made it to the next point
-				if (this.lane[this.nextLanePoint]) {
-					var distanceToNextLanePoint = CALC.getDistance(this.position.x, this.position.y, this.lane[this.nextLanePoint].x, this.lane[this.nextLanePoint].y);
-					if (distanceToNextLanePoint < this.DISTANCE_THRESHOLD) {
-						this.nextLanePoint++;
-					}
-				}
-			}
-		},
-
-		moveStep: function() {
-			this.position.x += this.direction.x * this.maxSpeed;
-			this.position.y += this.direction.y * this.maxSpeed;
-		},
-
-		pointTowards: function(x, y) {
-			this.direction = CALC.getVectorWithDirection(this.position.x, this.position.y, x, y);
-		},
-
-		die: function() {
-			if (this.DEAD === false) {
-				this.scene.removeChild(this.view);
-				this.view.clear();
-				this.DEAD = true;
-			}
-		},
-
-		render: function() {
-			this.view.clear();
-
-			if (this.ENEMY) {
-				this.view.beginFill(this.color, 0.05);
-				this.view.drawCircle(this.position.x, this.position.y, this.ATTACK_RADIUS);
-			}
-
-			// power bar
-			var powerBarWidth = 30,
-				powerBarHeight = 3,
-				powerWidth = Math.round(this.power / this.initialPower * powerBarWidth);
-
-			this.view.beginFill(0x444444);
-			this.view.drawRect(this.position.x - powerBarWidth / 2, this.position.y - 15, powerBarWidth, powerBarHeight);
-			this.view.beginFill(this.color);
-			this.view.drawRect(this.position.x - powerBarWidth / 2, this.position.y - 15, powerWidth, powerBarHeight);
-
-			// npc
-			this.view.beginFill(this.color, 1);
-			this.view.drawRect(this.position.x - 3, this.position.y - 3, 6, 6);
 		}
-	};
-}
+	},
+
+	findEnemyInAttentionRange: function(allNPCs) {
+		for (var i = 0; i < allNPCs.length; i++) {
+			if (allNPCs[i].ID !== this.ID && allNPCs[i].fraction !== this.fraction && allNPCs[i].dead === false) {
+				var distance = CALC.getDistance(this.position.x, this.position.y, allNPCs[i].position.x, allNPCs[i].position.y);
+				if (distance < this.attentionRadius) {
+					return allNPCs[i];
+				}
+			}
+		}
+	},
+
+	attack: function() {
+		if (this.dead === false && this.ENEMY.dead === false) {
+			var attackChance = 0.75, // at least 75% damage, max 100%
+				scope = this;
+
+			this.ENEMY.power -= attackChance * this.attackDamage + Math.random() * (1 - attackChance);
+
+			if (this.ENEMY.power < 1) {
+				this.ENEMY.die();
+				this.ENEMY = undefined;
+			}
+
+			this.waiting = true;
+			setTimeout(function() {
+				scope.waiting = false;
+			}, this.attackSpeed);
+		}
+	},
+
+	enemyInAttackRange: function() {
+		var distanceToEnemy = CALC.getDistance(this.position.x, this.position.y, this.ENEMY.position.x, this.ENEMY.position.y);
+		return (distanceToEnemy <= this.attackRadius);
+	},
+
+	pointTowards: function(x, y) {
+		this.direction = CALC.getVectorWithDirection(this.position.x, this.position.y, x, y);
+	},
+
+	die: function() {
+		if (this.dead === false) {
+			this.scene.removeChild(this.view);
+			this.view.clear();
+			this.dead = true;
+		}
+	},
+
+	render: function() {
+		this.view.clear();
+
+		if (this.ENEMY) {
+			this.view.beginFill(this.color, 0.05);
+			this.view.drawCircle(this.position.x, this.position.y, this.attackRadius);
+		}
+
+		// power bar
+		var powerBarWidth = 30,
+			powerBarHeight = 3,
+			powerWidth = Math.round(this.power / this.initialPower * powerBarWidth);
+
+		this.view.beginFill(0x444444);
+		this.view.drawRect(this.position.x - powerBarWidth / 2, this.position.y - 15, powerBarWidth, powerBarHeight);
+		this.view.beginFill(this.color);
+		this.view.drawRect(this.position.x - powerBarWidth / 2, this.position.y - 15, powerWidth, powerBarHeight);
+
+		// npc
+		this.view.beginFill(this.color, 1);
+		this.view.drawRect(this.position.x - 3, this.position.y - 3, 6, 6);
+	}
+};

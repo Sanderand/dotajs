@@ -12,11 +12,30 @@ if (width < height) {
 }
 
 var CFG = {
+	getColorForFraction: function(fraction) {
+		var result;
+		if (fraction == this.SENTINEL.FLAG) {
+			result = this.SENTINEL.COLOR;
+		} else {
+			result = this.SCOURGE.COLOR;
+		}
+		return result
+	},
+	getNameForFraction: function(fraction) {
+		var result;
+		if (fraction == this.SENTINEL.FLAG) {
+			result = "Sentinel";
+		} else {
+			result = "Scourge";
+		}
+		return result
+	},
 	GAME: {
 		NPC_GROUPSIZE: 3
 	},
 	SENTINEL: {
 		FLAG: 0,
+		COLOR: 0x00ff00,
 		BASE: {
 			x: padding,
 			y: size - padding
@@ -76,6 +95,7 @@ var CFG = {
 
 	SCOURGE: {
 		FLAG: 1,
+		COLOR: 0xff0000,
 		BASE: {
 			x: size - padding,
 			y: padding
