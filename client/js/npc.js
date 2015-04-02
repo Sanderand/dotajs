@@ -104,8 +104,11 @@ var NPC = {
 		this.view.clear();
 
 		if (this.ENEMY) {
-			this.view.beginFill(this.color, 0.05);
-			this.view.drawCircle(transformedPosition.x, transformedPosition.y, 10); //this.attackRadius);
+			var enemyTransformedPosition = getPointInCanvasDimension(this.ENEMY.position);
+			
+			this.view.lineStyle(1, this.color, 1);
+			this.view.moveTo(transformedPosition.x, transformedPosition.y);
+			this.view.lineTo(enemyTransformedPosition.x, enemyTransformedPosition.y);
 		}
 
 		// power bar
