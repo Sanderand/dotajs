@@ -10,16 +10,13 @@ var Game = {
 		this.setupEventListeners();
 
 		// start the loop
-		var scope = this;
-		setInterval(function() {
-			scope.loop();
-		}, 30);
+		setInterval(this.loop.bind(this), 30);
 	},
 
 	setupPixi: function() {
 		this.stage = new PIXI.Stage(0x888888);
 		this.scene = new PIXI.DisplayObjectContainer();
-		this.renderer = PIXI.autoDetectRenderer(CFG.size, CFG.size);
+		this.renderer = PIXI.autoDetectRenderer(width, height);
 		this.stage.addChild(this.scene);
 
 		// add canvas to dom
@@ -34,64 +31,58 @@ var Game = {
 	},
 
 	spawnNPCs: function() {
-		var scope = this;
-
 		CFG.SENTINEL.LANES.forEach(function(lane) {
-			scope.spawnNPCsAtLane(lane, CFG.GAME.NPC_GROUPSIZE, CFG.SENTINEL.FLAG);
-		});
+			this.spawnNPCsAtLane(lane, CFG.GAME.NPC_GROUPSIZE, CFG.SENTINEL.FLAG);
+		}.bind(this));
 
 		CFG.SCOURGE.LANES.forEach(function(lane) {
-			scope.spawnNPCsAtLane(lane, CFG.GAME.NPC_GROUPSIZE, CFG.SCOURGE.FLAG);
-		});
+			this.spawnNPCsAtLane(lane, CFG.GAME.NPC_GROUPSIZE, CFG.SCOURGE.FLAG);
+		}.bind(this));
 
-		setTimeout(function() {
-			scope.spawnNPCs();
-		}, 2500);
+		setTimeout(this.spawnNPCs.bind(this), CFG.GAME.SPAWN_INTERVAL);
 	},
 
 	spawnTowers: function() {
-		var scope = this;
-
 		CFG.SENTINEL.TOWERS.forEach(function(towerPostion) {
-			scope.spawnTower(towerPostion, CFG.SENTINEL.FLAG);
-		});
+			this.spawnTower(towerPostion, CFG.SENTINEL.FLAG);
+		}.bind(this));
 
 		CFG.SCOURGE.TOWERS.forEach(function(towerPostion) {
-			scope.spawnTower(towerPostion, CFG.SCOURGE.FLAG);
-		});
+			this.spawnTower(towerPostion, CFG.SCOURGE.FLAG);
+		}.bind(this));
 	},
 
 	spawnTower: function(position, fraction) {
 		this.NPCs.push(new Tower(this.scene, fraction, {
 			position: position,
-			power: 1000,
-			attackDamage: 20,
-			attackSpeed: 200,
-			attackRadius: 75,
-			attentionRadius: 75
+			power: CFG.GAME.TOWER.POWER,
+			attackDamage: CFG.GAME.TOWER.ATTACK_DMG,
+			attackSpeed: CFG.GAME.TOWER.ATTACK_SPEED,
+			attackRadius: CFG.GAME.TOWER.ATTACK_RADIUS,
+			attentionRadius: CFG.GAME.TOWER.ATTENTION_RADIUS
 		}));
 	},
 
 	spawnNPCsAtLane: function(lane, amount, fraction) {
 		for (var i = 0; i < amount; i++) {
 			this.NPCs.push(new Creep(this.scene, fraction, {
-				power: 100,
-				attackDamage: 20,
-				attackSpeed: 100,
-				attackRadius: 30,
-				attentionRadius: 50
+				power: CFG.GAME.CREEP.POWER,
+				attackDamage: CFG.GAME.CREEP.ATTACK_DMG,
+				attackSpeed: CFG.GAME.CREEP.ATTACK_SPEED,
+				attackRadius: CFG.GAME.CREEP.ATTACK_RADIUS,
+				attentionRadius: CFG.GAME.CREEP.ATTENTION_RADIUS
 			}, lane));
 		}
 	},
 
 	spawnBases: function() {
 		this.NPCs.push(new Base(this.scene, CFG.SENTINEL.FLAG, {
-			power: 10000,
+			power: CFG.GAME.BASE.POWER,
 			position: CFG.SENTINEL.BASE
 		}));
 
 		this.NPCs.push(new Base(this.scene, CFG.SCOURGE.FLAG, {
-			power: 10000,
+			power: CFG.GAME.BASE.POWER,
 			position: CFG.SCOURGE.BASE
 		}));
 	},
@@ -132,9 +123,10 @@ var Game = {
 			if (this.NPCs[i].dead === true) {
 				// win
 				if (this.NPCs[i].base === true) {
-					alert(CFG.getNameForFraction(this.NPCs[i].fraction) + ' lost');
+					console.debug(CFG.getNameForFraction(this.NPCs[i].fraction) + ' lost');
 				}
 				this.NPCs.splice(i, 1);
+				window.console.debug('death');
 			}
 		}
 	},

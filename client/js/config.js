@@ -1,14 +1,18 @@
 'use strict';
 
-var width = window.innerWidth,
-	height = window.innerHeight,
-	size = 0,
-	padding = 50;
+var width = 500,
+	height = 500,
+	size = 100,
+	padding = size * 0.05;
 
-if (width < height) {
-	size = width;
-} else {
-	size = height;
+function getPointInCanvasDimension(position) {
+	var percentageX = position.x / size,
+		percentageY = position.y / size;
+
+	return {
+		x: percentageX * width,
+		y: percentageY * height
+	};
 }
 
 var CFG = {
@@ -24,14 +28,37 @@ var CFG = {
 	getNameForFraction: function(fraction) {
 		var result;
 		if (fraction == this.SENTINEL.FLAG) {
-			result = "Sentinel";
+			result = 'Sentinel';
 		} else {
-			result = "Scourge";
+			result = 'Scourge';
 		}
 		return result
 	},
 	GAME: {
-		NPC_GROUPSIZE: 3
+		NPC_GROUPSIZE: 3,
+		SPAWN_INTERVAL: 7500,
+
+		BASE: {
+			POWER: 10000
+		},
+		CREEP: {
+			POWER: 100,
+			ATTACK_DMG: 20,
+			ATTACK_SPEED: 200,
+			ATTACK_RADIUS: 3,
+			ATTENTION_RADIUS: 3,
+
+			SPEED: 0.1,
+			MAX_INITIAL_OFFSET: 3,
+			DISTANCE_THRESHOLD: 2
+		},
+		TOWER: {
+			POWER: 1000,
+			ATTACK_DMG: 20,
+			ATTACK_SPEED: 200,
+			ATTACK_RADIUS: 1,
+			ATTENTION_RADIUS: 2
+		}
 	},
 	SENTINEL: {
 		FLAG: 0,

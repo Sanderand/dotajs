@@ -3,10 +3,10 @@ function Creep(scene, fraction, config, lane) {
 
 	newInstance.initialize = function() {
 		this.lane = lane;
-		this.positioningOffset = 50;
-		this.distanceThreshold = 50;
+		this.positioningOffset = CFG.GAME.CREEP.MAX_INITIAL_OFFSET;
+		this.distanceThreshold = CFG.GAME.CREEP.DISTANCE_THRESHOLD;
+		this.speed = CFG.GAME.CREEP.SPEED;
 		this.nextLanePoint = 1;
-		this.speed = 3;
 		this.direction = {};
 		this.position = {
 			x: this.lane[0].x + (Math.random() * this.positioningOffset - this.positioningOffset / 2),

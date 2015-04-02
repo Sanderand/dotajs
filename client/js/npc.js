@@ -14,16 +14,16 @@ var NPC = {
 		this.view = new PIXI.Graphics();
 		this.position = config.position || {};
 
-		this.initialPower = config.power || 100;
+		this.initialPower = config.power;
 		this.power = this.initialPower;
 
 		this.dead = false;
 		this.waiting = false;
-		this.attackDamage = config.attackDamage || 1;
-		this.attackSpeed = config.attackSpeed ||  500;
+		this.attackDamage = config.attackDamage;
+		this.attackSpeed = config.attackSpeed;
 
-		this.attackRadius = config.attackRadius || 10;
-		this.attentionRadius = config.attentionRadius || 20;
+		this.attackRadius = config.attackRadius;
+		this.attentionRadius = config.attentionRadius;
 		this.ID = Math.round(Math.random() * 1000000); // todo: put somewhere else
 
 		this.scene.addChild(this.view);
@@ -100,11 +100,12 @@ var NPC = {
 	},
 
 	render: function() {
+		var transformedPosition = getPointInCanvasDimension(this.position);
 		this.view.clear();
 
 		if (this.ENEMY) {
 			this.view.beginFill(this.color, 0.05);
-			this.view.drawCircle(this.position.x, this.position.y, this.attackRadius);
+			this.view.drawCircle(transformedPosition.x, transformedPosition.y, 10); //this.attackRadius);
 		}
 
 		// power bar
@@ -113,12 +114,12 @@ var NPC = {
 			powerWidth = Math.round(this.power / this.initialPower * powerBarWidth);
 
 		this.view.beginFill(0x444444);
-		this.view.drawRect(this.position.x - powerBarWidth / 2, this.position.y - 15, powerBarWidth, powerBarHeight);
+		this.view.drawRect(transformedPosition.x - powerBarWidth / 2, transformedPosition.y - 15, powerBarWidth, powerBarHeight);
 		this.view.beginFill(this.color);
-		this.view.drawRect(this.position.x - powerBarWidth / 2, this.position.y - 15, powerWidth, powerBarHeight);
+		this.view.drawRect(transformedPosition.x - powerBarWidth / 2, transformedPosition.y - 15, powerWidth, powerBarHeight);
 
 		// npc
 		this.view.beginFill(this.color, 1);
-		this.view.drawRect(this.position.x - 3, this.position.y - 3, 6, 6);
+		this.view.drawRect(transformedPosition.x - 3, transformedPosition.y - 3, 6, 6);
 	}
 };
